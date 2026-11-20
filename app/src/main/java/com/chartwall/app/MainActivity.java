@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
         root.setPadding(px(18), px(20), px(18), px(32));
         scroll.addView(root);
 
-        TextView title = text("Chartwall", 26, INK, disp);
+        TextView title = text("Algo Ali Walls", 26, INK, disp);
         root.addView(title);
         TextView sub = text("Trader live wallpaper · prices are for design, not live data", 12, MUTE, mono);
         sub.setPadding(0, px(2), 0, px(16));
@@ -135,7 +135,7 @@ public class MainActivity extends Activity {
             card.setOrientation(LinearLayout.VERTICAL);
             card.setPadding(px(16), px(14), px(16), px(14));
             card.setBackground(rounded(PANEL, px(14), ACCENT));
-            TextView ct = text("Chartwall Pro", 17, INK, disp);
+            TextView ct = text("Algo Ali Pro", 17, INK, disp);
             card.addView(ct);
             TextView cd = text("Sab 6 styles aur 5 colors, apna logo aur company name, aur watermark nahi. Ek dafa ki payment.", 13, MUTE, null);
             cd.setPadding(0, px(4), 0, px(10));
@@ -450,7 +450,7 @@ public class MainActivity extends Activity {
         } catch (ActivityNotFoundException e) {
             try {
                 startActivity(new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER));
-                Toast.makeText(this, "List mein Chartwall choose karo", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "List mein Algo Ali Walls choose karo", Toast.LENGTH_LONG).show();
             } catch (ActivityNotFoundException e2) {
                 Toast.makeText(this, "Is phone pe live wallpaper ka option nahi mila", Toast.LENGTH_LONG).show();
             }
@@ -516,14 +516,14 @@ public class MainActivity extends Activity {
         sim.step(0);
         new Renderer(this).draw(new Canvas(bmp), w, h, still, sim, 0);
         ContentValues v = new ContentValues();
-        v.put(MediaStore.Images.Media.DISPLAY_NAME, "chartwall-" + System.currentTimeMillis() + ".png");
+        v.put(MediaStore.Images.Media.DISPLAY_NAME, "algoali-" + System.currentTimeMillis() + ".png");
         v.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
-        v.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Chartwall");
+        v.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/AlgoAli");
         try {
             Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
             if (uri == null) throw new IllegalStateException();
             try (OutputStream out = getContentResolver().openOutputStream(uri)) { bmp.compress(Bitmap.CompressFormat.PNG, 100, out); }
-            Toast.makeText(this, "Gallery mein save ho gaya (Pictures/Chartwall)", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Gallery mein save ho gaya (Pictures/AlgoAli)", Toast.LENGTH_LONG).show();
         } catch (Throwable e) {
             Toast.makeText(this, "Save nahi ho saka", Toast.LENGTH_LONG).show();
         }

@@ -43,30 +43,30 @@ jobs:
           chmod +x gradlew
           if [ "$HAS_UPLOAD_KEY" = "1" ]; then
             ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
-            cp app/build/outputs/bundle/playRelease/app-play-release.aab Chartwall-play.aab
+            cp app/build/outputs/bundle/playRelease/app-play-release.aab AlgoAliWalls-play.aab
           else
             # No key in this repo's secrets: build an unsigned bundle; it is signed with the upload key outside CI.
             ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
-            cp app/build/outputs/bundle/playRelease/app-play-release.aab Chartwall-play-unsigned.aab
+            cp app/build/outputs/bundle/playRelease/app-play-release.aab AlgoAliWalls-play-unsigned.aab
           fi
-          cp app/build/outputs/apk/github/release/app-github-release.apk Chartwall.apk
+          cp app/build/outputs/apk/github/release/app-github-release.apk AlgoAliWalls.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Chartwall
+          name: AlgoAliWalls
           path: |
-            Chartwall.apk
-            Chartwall-play*.aab
+            AlgoAliWalls.apk
+            AlgoAliWalls-play*.aab
           if-no-files-found: warn
 
       - name: Publish to the "latest" release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          FILES="Chartwall.apk"
-          for f in Chartwall-play.aab Chartwall-play-unsigned.aab; do [ -f "$f" ] && FILES="$FILES $f"; done
+          FILES="AlgoAliWalls.apk"
+          for f in AlgoAliWalls-play.aab AlgoAliWalls-play-unsigned.aab; do [ -f "$f" ] && FILES="$FILES $f"; done
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest $FILES \
-            --title "Chartwall (build ${{ github.run_number }})" \
-            --notes "Chartwall.apk: test version for your phone (everything unlocked). Chartwall-play.aab: upload this to Google Play Console." \
+            --title "Algo Ali Walls (build ${{ github.run_number }})" \
+            --notes "AlgoAliWalls.apk: test version for your phone (everything unlocked). AlgoAliWalls-play.aab: upload this to Google Play Console." \
             --latest

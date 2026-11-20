@@ -1,12 +1,12 @@
-# Chartwall – Play Store listing
+# Algo Ali Walls – Play Store listing
 
-**App name (30 max):** Chartwall: Trader Wallpaper
+**App name (30 max):** Algo Ali: Trader Wallpapers
 
 **Short description (80 max):**
-Moving candlestick live wallpapers for traders, with your name and logo.
+Moving candlestick live wallpapers for traders by Algo Ali. Add your own logo.
 
 **Full description:**
-Chartwall turns your phone into a trading desk. Pick a style and watch candles form, an order book breathe, or a heatmap shift right on your home and lock screen.
+Algo Ali Walls turns your phone into a trading desk. Made by Algo Ali for the trading community. Pick a style and watch candles form, an order book breathe, or a heatmap shift right on your home and lock screen.
 
 STYLES
 • Candles – moving candlestick chart with EMA and volume
@@ -27,7 +27,7 @@ MAKE IT YOURS
 BATTERY FRIENDLY
 The animation pauses whenever the screen is off or an app covers the wallpaper.
 
-CHARTWALL PRO (one-time purchase)
+ALGO ALI PRO (one-time purchase)
 • All 6 styles and all 5 color themes (Neon, Gold, Ice, Violet, Mono)
 • Company name and logo
 • No watermark
@@ -37,9 +37,11 @@ Note: prices and charts are generated for design only. They are not live market 
 **Category:** Personalization
 **Tags:** wallpaper, live wallpaper, trading
 **Contact email:** (your email)
+**Developer name:** Algo Ali
+**Package name:** com.algoali.walls
 **Privacy policy URL:** https://mmuhammad3077-dev.github.io/chartwall/privacy.html
 
-**In-app product:** ID `chartwall_pro`, one-time, name "Chartwall Pro", suggested price PKR 399
+**In-app product:** ID `algoali_walls_pro`, one-time, name "Algo Ali Pro", suggested price PKR 399
 
 **Content rating:** answer "No" to everything (no violence, no user content, no gambling) → Everyone
 **Data safety:** "No data collected", "No data shared"

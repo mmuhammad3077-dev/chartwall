@@ -17,9 +17,9 @@ import com.android.billingclient.api.QueryPurchasesParams;
 import java.util.Collections;
 import java.util.List;
 
-/** Google Play Billing: one-time "chartwall_pro" purchase that unlocks Pro. */
+/** Google Play Billing: one-time "algoali_walls_pro" purchase that unlocks Pro. */
 public final class Store implements PurchasesUpdatedListener {
-    public static final String PRODUCT_ID = "chartwall_pro";
+    public static final String PRODUCT_ID = "algoali_walls_pro";
 
     public interface Listener {
         void onProChanged(boolean pro);

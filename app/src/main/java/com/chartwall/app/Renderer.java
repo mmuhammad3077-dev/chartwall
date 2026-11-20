@@ -68,7 +68,7 @@ public final class Renderer {
     private void watermark() {
         font(mono, 22 * s, Palette.alpha(P.ink, 0.45f), Paint.Align.RIGHT);
         p.setLetterSpacing(0.1f);
-        c.drawText("MADE WITH CHARTWALL", W * 0.93f, H * 0.985f - 24 * s, p);
+        c.drawText("MADE WITH ALGO ALI", W * 0.93f, H * 0.985f - 24 * s, p);
         p.setLetterSpacing(0);
     }
 

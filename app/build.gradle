@@ -10,7 +10,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.chartwall.app"
+        applicationId "com.algoali.walls"
         minSdk 26
         targetSdk 36
         versionCode Integer.parseInt(env["VERSION_CODE"] ?: "1")
@@ -48,14 +48,14 @@ android {
             applicationIdSuffix ".test"
             versionNameSuffix "-test"
             buildConfigField "boolean", "UNLOCK_ALL", "true"
-            resValue "string", "app_name", "Chartwall Test"
+            resValue "string", "app_name", "Algo Ali Walls Test"
             signingConfig signingConfigs.shared
         }
         // Google Play build: free + Pro (Google Play Billing).
         play {
             dimension "dist"
             buildConfigField "boolean", "UNLOCK_ALL", "false"
-            resValue "string", "app_name", "Chartwall"
+            resValue "string", "app_name", "Algo Ali Walls"
             if (hasUploadKey) signingConfig signingConfigs.upload
         }
     }
