@@ -61,7 +61,8 @@ public final class Store implements PurchasesUpdatedListener {
                 .setProductList(Collections.singletonList(QueryProductDetailsParams.Product.newBuilder()
                         .setProductId(PRODUCT_ID).setProductType(BillingClient.ProductType.INAPP).build()))
                 .build();
-        client.queryProductDetailsAsync(params, (r, list) -> {
+        client.queryProductDetailsAsync(params, (r, result) -> {
+            List<ProductDetails> list = result == null ? null : result.getProductDetailsList();
             if (r.getResponseCode() != BillingClient.BillingResponseCode.OK || list == null || list.isEmpty()) return;
             details = list.get(0);
             ProductDetails.OneTimePurchaseOfferDetails offer = details.getOneTimePurchaseOfferDetails();

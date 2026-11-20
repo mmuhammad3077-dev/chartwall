@@ -73,5 +73,5 @@ android {
 }
 
 dependencies {
-    playImplementation "com.android.billingclient:billing:7.1.1"
+    playImplementation "com.android.billingclient:billing:8.0.0"
 }
