@@ -43,6 +43,8 @@ public final class Config {
     public int speed = 2;
     public String quote = QUOTES[0];
     public boolean showQuote = true;
+    /** Keep the top half clear for phones with a very big lock-screen clock. */
+    public boolean bigClock = true;
     public String name = "";
     public String company = "";
     public long seed = 20261120L;
@@ -59,6 +61,7 @@ public final class Config {
         c.speed = p.getInt("speed", c.speed);
         c.quote = p.getString("quote", c.quote);
         c.showQuote = p.getBoolean("showQuote", c.showQuote);
+        c.bigClock = p.getBoolean("bigClock", c.bigClock);
         c.name = p.getString("name", c.name);
         c.company = p.getString("company", c.company);
         c.seed = p.getLong("seed", c.seed);
@@ -74,7 +77,7 @@ public final class Config {
         p.edit()
                 .putString("style", style).putString("pal", pal).putString("market", market)
                 .putString("symbol", symbol).putString("trend", trend).putInt("speed", speed)
-                .putString("quote", quote).putBoolean("showQuote", showQuote)
+                .putString("quote", quote).putBoolean("showQuote", showQuote).putBoolean("bigClock", bigClock)
                 .putString("name", name).putString("company", company).putLong("seed", seed)
                 .putLong("savedAt", System.nanoTime())
                 .apply();

@@ -108,6 +108,9 @@ public class MainActivity extends Activity {
         setBtn.setOnClickListener(v -> setLiveWallpaper());
         root.addView(setBtn, fullWidth(px(18)));
 
+        section(root, "Lock screen clock");
+        root.addView(chips(new String[]{"Big clock (chart lower)", "Small clock"}, () -> cfg.bigClock ? 0 : 1, i -> { cfg.bigClock = i == 0; changed(false); }));
+
         section(root, "Style");
         root.addView(chips(Config.STYLE_NAMES, () -> indexOf(Config.STYLES, cfg.style), i -> { cfg.style = Config.STYLES[i]; changed(false); }));
 

@@ -41,9 +41,15 @@ public final class Renderer {
     // Per-frame state
     private Canvas c; private int W, H; private float s; private Palette P; private Config cfg; private Sim sim; private long t; private Market mk;
 
+    /* "Big clock" layout: everything designed between 30% and 100% of the height is pushed into the lower part,
+       so phones with a huge lock-screen clock (Xiaomi, Realme...) keep the chart readable. */
+    private static final float START = 0.545f, K = 0.52f;
+    private boolean low;
+    private float fy(float f) { return H * (low && f >= 0.3f ? START + (f - 0.3f) * K : f); }
+
     public void draw(Canvas canvas, int width, int height, Config config, Sim simulation, long tMs) {
         c = canvas; W = width; H = height; s = W / 1080f; cfg = config; sim = simulation; t = tMs;
-        P = Palette.get(cfg.pal); mk = cfg.marketData();
+        P = Palette.get(cfg.pal); mk = cfg.marketData(); low = cfg.bigClock;
         drawBg();
         Random rng = new Random(cfg.seed);
         switch (cfg.style) {
@@ -183,6 +189,7 @@ public final class Renderer {
     private void quoteFooter(float y) {
         float x = W * 0.07f;
         if (hasBrand()) y -= 40 * s;
+        if (low) y += 40 * s; // the chart above is squeezed, so give the quote its own room
         if (cfg.showQuote) {
             font(dispSemi, 46 * s, Palette.alpha(P.ink, 0.9f), Paint.Align.LEFT);
             List<String> lines = wrap(cfg.quoteText().toUpperCase(), W * 0.8f);
@@ -195,7 +202,7 @@ public final class Renderer {
 
     /* ---------- styles ---------- */
     private void candles() {
-        float x0 = W * 0.07f, x1 = W * 0.79f, y0 = H * 0.43f, y1 = H * 0.71f, vy1 = H * 0.775f;
+        float x0 = W * 0.07f, x1 = W * 0.79f, y0 = fy(0.43f), y1 = fy(0.71f), vy1 = fy(0.775f);
         List<Sim.Candle> data = sim.candles();
         double lo = sim.lo, hi = sim.hi;
         font(mono, 24 * s, P.dim, Paint.Align.LEFT);
@@ -244,8 +251,8 @@ public final class Renderer {
         fill(lc); rect.set(W * 0.815f, ly - 24 * s, W * 0.815f + Math.min(lw + 24 * s, W * 0.18f), ly + 24 * s);
         c.drawRoundRect(rect, 6 * s, 6 * s, p);
         font(mono, 26 * s, P.bg, Paint.Align.LEFT); textMid(lt, W * 0.815f + 12 * s, ly);
-        header(H * 0.375f, last.c / data.get(0).o - 1, "1H · EMA 9");
-        quoteFooter(H * 0.835f);
+        header(fy(0.375f) - (low ? 36 * s : 0), last.c / data.get(0).o - 1, "1H · EMA 9");
+        quoteFooter(fy(0.835f));
     }
 
     private static float Y(double pr, double lo, double hi, float y0, float y1) {
@@ -253,7 +260,7 @@ public final class Renderer {
     }
 
     private void terminal() {
-        float x0 = W * 0.07f, x1 = W * 0.93f, y = H * 0.34f;
+        float x0 = W * 0.07f, x1 = W * 0.93f, y = fy(0.34f);
         font(mono, 28 * s, P.hl, Paint.Align.LEFT); c.drawText("▌MARKET WATCH", x0, y, p);
         font(mono, 28 * s, P.dim, Paint.Align.RIGHT); c.drawText(mk.id.toUpperCase() + " · 24H", x1, y, p);
         y += 56 * s;
@@ -270,7 +277,7 @@ public final class Renderer {
             if (mk.symbols[i].equalsIgnoreCase(sym)) continue;
             syms.add(mk.symbols[i]); prices.add(mk.prices[i]);
         }
-        float rowH = H * 0.037f;
+        float rowH = H * 0.037f * (low ? K : 1);
         for (int i = 0; i < syms.size(); i++) {
             double[] cl;
             if (i == 0) {
@@ -329,7 +336,7 @@ public final class Renderer {
     }
 
     private void depth(Random rng) {
-        float x0 = W * 0.05f, x1 = W * 0.95f, yb = H * 0.76f, yt = H * 0.47f, mid = (x0 + x1) / 2;
+        float x0 = W * 0.05f, x1 = W * 0.95f, yb = fy(0.76f), yt = fy(0.47f), mid = (x0 + x1) / 2;
         int levels = 42; float gap = W * 0.012f;
         float skew = "bull".equals(cfg.trend) ? 1.25f : "bear".equals(cfg.trend) ? 0.8f : 1f;
         float[] bids = side(rng, levels, 0), asks = side(rng, levels, 3);
@@ -347,13 +354,13 @@ public final class Renderer {
             float x = mid + k * (mid - x0) / 2.4f;
             c.drawText(mk.fmt(price + k * tick * 10), x, yb + 40 * s, p);
         }
-        font(mono, 30 * s, P.dim, Paint.Align.CENTER); c.drawText(cfg.displaySymbol() + "  ·  ORDER BOOK", W / 2f, H * 0.335f, p);
-        font(disp, 120 * s, price >= last.o ? P.ink : P.down, Paint.Align.CENTER); c.drawText(mk.fmt(price), W / 2f, H * 0.40f, p);
+        font(mono, 30 * s, P.dim, Paint.Align.CENTER); c.drawText(cfg.displaySymbol() + "  ·  ORDER BOOK", W / 2f, fy(0.335f) - (low ? 24 * s : 0), p);
+        font(disp, 120 * s, price >= last.o ? P.ink : P.down, Paint.Align.CENTER); c.drawText(mk.fmt(price), W / 2f, fy(0.40f) + (low ? 22 * s : 0), p);
         font(mono, 28 * s, P.up, Paint.Align.LEFT);
-        c.drawText(String.format(java.util.Locale.US, "BIDS %.1fK", bids[levels - 1] * 12), x0, H * 0.445f, p);
+        c.drawText(String.format(java.util.Locale.US, "BIDS %.1fK", bids[levels - 1] * 12), x0, fy(0.445f), p);
         p.setColor(P.down); p.setTextAlign(Paint.Align.RIGHT);
-        c.drawText(String.format(java.util.Locale.US, "%.1fK ASKS", asks[levels - 1] * 12), x1, H * 0.445f, p);
-        quoteFooter(H * 0.845f);
+        c.drawText(String.format(java.util.Locale.US, "%.1fK ASKS", asks[levels - 1] * 12), x1, fy(0.445f), p);
+        quoteFooter(fy(0.845f));
     }
 
     private float[] side(Random rng, int levels, double off) {
@@ -388,7 +395,7 @@ public final class Renderer {
     private static final class Tile { String sym; float w; float ch; RectF r; }
 
     private void heatmap(Random rng) {
-        RectF R = new RectF(W * 0.05f, H * 0.36f, W * 0.95f, H * 0.79f);
+        RectF R = new RectF(W * 0.05f, fy(0.36f), W * 0.95f, fy(0.79f));
         String sym = cfg.displaySymbol();
         ArrayList<String> list = new ArrayList<>();
         list.add(sym);
@@ -422,8 +429,8 @@ public final class Renderer {
             }
         }
         font(mono, 28 * s, P.dim, Paint.Align.LEFT);
-        c.drawText("HEATMAP · " + mk.id.toUpperCase() + " · 24H", W * 0.05f, H * 0.34f, p);
-        quoteFooter(H * 0.85f);
+        c.drawText("HEATMAP · " + mk.id.toUpperCase() + " · 24H", W * 0.05f, fy(0.34f), p);
+        quoteFooter(fy(0.85f));
     }
 
     private static void split(List<Tile> arr, RectF r, List<Tile> out) {
@@ -446,7 +453,7 @@ public final class Renderer {
     }
 
     private void fib() {
-        float x0 = W * 0.07f, x1 = W * 0.74f, y0 = H * 0.44f, y1 = H * 0.75f;
+        float x0 = W * 0.07f, x1 = W * 0.74f, y0 = fy(0.44f), y1 = fy(0.75f);
         List<Sim.Candle> cs = sim.candles();
         double[] d = new double[cs.size() * 2];
         for (int i = 0; i < cs.size(); i++) {
@@ -486,25 +493,25 @@ public final class Renderer {
         float pulse = sim.moving() ? 1 + 0.35f * (float) Math.sin(t / 260.0) : 1;
         fill(P.ink); c.drawCircle(lastX, ly, 9 * s, p);
         stroke(Palette.alpha(P.up, 0.4f), 6 * s); c.drawCircle(lastX, ly, 22 * s * pulse, p);
-        header(H * 0.375f, d[d.length - 1] / d[0] - 1, "4H · FIB");
-        quoteFooter(H * 0.835f);
+        header(fy(0.375f) - (low ? 36 * s : 0), d[d.length - 1] / d[0] - 1, "4H · FIB");
+        quoteFooter(fy(0.835f));
     }
 
     private static double lp(double r, boolean up, double lo, double hi) { return up ? hi - (hi - lo) * r : lo + (hi - lo) * r; }
 
     private void quote() {
         float x = W * 0.08f;
-        float fs = 118 * s;
+        float fs = 118 * s * (low ? 0.72f : 1);
         font(disp, fs, P.ink, Paint.Align.LEFT);
         List<String> lines = wrap(cfg.quoteText().toUpperCase(), W * 0.84f);
-        while (lines.size() > 5 && fs > 60 * s) { fs -= 8 * s; p.setTextSize(fs); lines = wrap(cfg.quoteText().toUpperCase(), W * 0.84f); }
-        float lh = fs * 1.02f, y = H * 0.42f;
+        while (lines.size() > (low ? 3 : 5) && fs > 50 * s) { fs -= 8 * s; p.setTextSize(fs); lines = wrap(cfg.quoteText().toUpperCase(), W * 0.84f); }
+        float lh = fs * 1.02f, y = fy(0.42f);
         for (int i = 0; i < lines.size(); i++) { p.setColor(i == lines.size() - 1 ? P.hl : P.ink); c.drawText(lines.get(i), x, y + i * lh, p); }
         y += (lines.size() - 1) * lh + 70 * s;
         fill(P.hl); c.drawRect(x, y, x + 90 * s, y + 6 * s, p);
         List<Sim.Candle> cs = sim.candles();
         double mn = sim.lo, mx = sim.hi;
-        float sy0 = H * 0.68f, sy1 = H * 0.76f, sx1 = W * 0.92f;
+        float sy0 = fy(0.68f), sy1 = fy(0.76f), sx1 = W * 0.92f;
         float stp = (sx1 - x) / (cs.size() - 1), shift = sim.moving() ? (float) sim.f * stp : stp;
         double first = cs.get(0).c, lastP = cs.get(cs.size() - 1).c;
         int col = lastP >= first ? P.up : P.down;
