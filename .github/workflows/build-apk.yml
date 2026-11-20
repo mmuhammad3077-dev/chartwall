@@ -45,7 +45,9 @@ jobs:
             ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
             cp app/build/outputs/bundle/playRelease/app-play-release.aab Chartwall-play.aab
           else
-            ./gradlew --no-daemon assembleGithubRelease compilePlayReleaseJavaWithJavac
+            # No key in this repo's secrets: build an unsigned bundle; it is signed with the upload key outside CI.
+            ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
+            cp app/build/outputs/bundle/playRelease/app-play-release.aab Chartwall-play-unsigned.aab
           fi
           cp app/build/outputs/apk/github/release/app-github-release.apk Chartwall.apk
 
@@ -54,7 +56,7 @@ jobs:
           name: Chartwall
           path: |
             Chartwall.apk
-            Chartwall-play.aab
+            Chartwall-play*.aab
           if-no-files-found: warn
 
       - name: Publish to the "latest" release
@@ -62,7 +64,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           FILES="Chartwall.apk"
-          [ -f Chartwall-play.aab ] && FILES="$FILES Chartwall-play.aab"
+          for f in Chartwall-play.aab Chartwall-play-unsigned.aab; do [ -f "$f" ] && FILES="$FILES $f"; done
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest $FILES \
             --title "Chartwall (build ${{ github.run_number }})" \
