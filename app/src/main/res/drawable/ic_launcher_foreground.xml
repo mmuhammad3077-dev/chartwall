@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- red candle -->
+    <path android:fillColor="#FF3B5C" android:pathData="M38,44h2v30h-2z" />
+    <path android:fillColor="#FF3B5C" android:pathData="M34,50h10v16h-10z" />
+    <!-- green candle -->
+    <path android:fillColor="#16F29A" android:pathData="M53,36h2v38h-2z" />
+    <path android:fillColor="#16F29A" android:pathData="M49,44h10v22h-10z" />
+    <!-- tall green candle -->
+    <path android:fillColor="#16F29A" android:pathData="M68,30h2v36h-2z" />
+    <path android:fillColor="#16F29A" android:pathData="M64,34h10v26h-10z" />
+</vector>
