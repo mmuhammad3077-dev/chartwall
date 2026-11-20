@@ -45,6 +45,43 @@ public final class Config {
     public boolean showQuote = true;
     /** Keep the top half clear for phones with a very big lock-screen clock. */
     public boolean bigClock = true;
+    /** True when Pro is bought (Play build) or always (GitHub test build). Never saved by save(). */
+    public boolean pro = false;
+
+    /* What the free version includes. Everything else needs Pro. */
+    public static final String[] FREE_STYLES = {"candles", "terminal", "quote"};
+    public static final String[] FREE_PALETTES = {"neon", "mono"};
+
+    public static boolean isFreeStyle(String id) { for (String s : FREE_STYLES) if (s.equals(id)) return true; return false; }
+    public static boolean isFreePalette(String id) { for (String s : FREE_PALETTES) if (s.equals(id)) return true; return false; }
+
+    /** Pro features the current settings use, as short names; empty when everything is free. */
+    public java.util.List<String> lockedInUse() {
+        java.util.ArrayList<String> out = new java.util.ArrayList<>();
+        if (pro) return out;
+        if (!isFreeStyle(style)) out.add("style");
+        if (!isFreePalette(pal)) out.add("colors");
+        if (!company.isEmpty()) out.add("company name");
+        if (logo != null) out.add("logo");
+        return out;
+    }
+
+    /** Drop Pro-only settings (used by the wallpaper itself when Pro is not owned). */
+    public void applyFreeLimits() {
+        if (pro) return;
+        if (!isFreeStyle(style)) style = FREE_STYLES[0];
+        if (!isFreePalette(pal)) pal = FREE_PALETTES[0];
+        company = "";
+        logo = null;
+    }
+
+    public static boolean isPro(Context ctx) {
+        return BuildConfig.UNLOCK_ALL || ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("pro", false);
+    }
+
+    public static void setPro(Context ctx, boolean v) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("pro", v).putLong("savedAt", System.nanoTime()).apply();
+    }
     public String name = "";
     public String company = "";
     public long seed = 20261120L;
@@ -65,6 +102,7 @@ public final class Config {
         c.name = p.getString("name", c.name);
         c.company = p.getString("company", c.company);
         c.seed = p.getLong("seed", c.seed);
+        c.pro = isPro(ctx);
         File f = new File(ctx.getFilesDir(), LOGO_FILE);
         if (f.exists()) {
             try { c.logo = BitmapFactory.decodeFile(f.getAbsolutePath()); } catch (Throwable ignored) { c.logo = null; }

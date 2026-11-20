@@ -2,35 +2,67 @@ plugins {
     id "com.android.application"
 }
 
+def env = System.getenv()
+def hasUploadKey = env["UPLOAD_KEYSTORE"] != null && file(env["UPLOAD_KEYSTORE"]).exists()
+
 android {
     namespace "com.chartwall.app"
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.chartwall.app"
         minSdk 26
-        targetSdk 34
-        versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
-        versionName "1.0." + (System.getenv("VERSION_CODE") ?: "1")
+        targetSdk 36
+        versionCode Integer.parseInt(env["VERSION_CODE"] ?: "1")
+        versionName "1.1." + (env["VERSION_CODE"] ?: "1")
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     signingConfigs {
-        // A fixed key kept in the repo so every new build installs over the old one.
+        // Test builds from GitHub: a fixed key kept in the repo so new builds install over old ones.
         shared {
             storeFile file("chartwall.keystore")
             storePassword "chartwall"
             keyAlias "chartwall"
             keyPassword "chartwall"
         }
+        // Play Store upload key: secret, only available in GitHub Actions (repo secrets).
+        if (hasUploadKey) {
+            upload {
+                storeFile file(env["UPLOAD_KEYSTORE"])
+                storePassword env["UPLOAD_STORE_PASSWORD"]
+                keyAlias env["UPLOAD_KEY_ALIAS"]
+                keyPassword env["UPLOAD_KEY_PASSWORD"]
+            }
+        }
+    }
+
+    flavorDimensions = ["dist"]
+    productFlavors {
+        // Sideloaded test build: everything unlocked, installs next to the Play version.
+        github {
+            dimension "dist"
+            applicationIdSuffix ".test"
+            versionNameSuffix "-test"
+            buildConfigField "boolean", "UNLOCK_ALL", "true"
+            resValue "string", "app_name", "Chartwall Test"
+            signingConfig signingConfigs.shared
+        }
+        // Google Play build: free + Pro (Google Play Billing).
+        play {
+            dimension "dist"
+            buildConfigField "boolean", "UNLOCK_ALL", "false"
+            resValue "string", "app_name", "Chartwall"
+            if (hasUploadKey) signingConfig signingConfigs.upload
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.shared
-        }
-        debug {
-            signingConfig signingConfigs.shared
         }
     }
 
@@ -38,4 +70,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    playImplementation "com.android.billingclient:billing:7.1.1"
 }

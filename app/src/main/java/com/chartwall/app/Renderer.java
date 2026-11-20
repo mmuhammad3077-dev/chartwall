@@ -60,7 +60,16 @@ public final class Renderer {
             case "quote": quote(); break;
             default: candles();
         }
+        if (!cfg.pro) watermark();
         p.setShader(null); p.clearShadowLayer(); p.setPathEffect(null); p.setAlpha(255);
+    }
+
+    /** Small mark on free wallpapers; Pro removes it. */
+    private void watermark() {
+        font(mono, 22 * s, Palette.alpha(P.ink, 0.45f), Paint.Align.RIGHT);
+        p.setLetterSpacing(0.1f);
+        c.drawText("MADE WITH CHARTWALL", W * 0.93f, H * 0.985f - 24 * s, p);
+        p.setLetterSpacing(0);
     }
 
     /* ---------- helpers ---------- */

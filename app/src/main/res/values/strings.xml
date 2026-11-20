@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Chartwall</string>
     <string name="wallpaper_description">Moving candlestick chart wallpaper with your name, company and logo.</string>
 </resources>

@@ -36,6 +36,7 @@ public class ChartWallpaperService extends WallpaperService {
 
         private void reload() {
             cfg = Config.load(ChartWallpaperService.this);
+            cfg.applyFreeLimits();
             sim = new Sim(cfg);
             t0 = SystemClock.uptimeMillis();
         }

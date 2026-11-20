@@ -21,25 +21,50 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build release APK
+      - name: Restore Play upload key (if the repo secrets are set)
+        env:
+          UPLOAD_KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$UPLOAD_KEYSTORE_B64" ]; then
+            echo "$UPLOAD_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "UPLOAD_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+            echo "HAS_UPLOAD_KEY=1" >> "$GITHUB_ENV"
+          else
+            echo "No upload key secrets yet: the Play bundle is skipped."
+          fi
+
+      - name: Build test APK and Play bundle
         env:
           VERSION_CODE: ${{ github.run_number }}
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
-          cp app/build/outputs/apk/release/app-release.apk Chartwall.apk
+          if [ "$HAS_UPLOAD_KEY" = "1" ]; then
+            ./gradlew --no-daemon assembleGithubRelease bundlePlayRelease
+            cp app/build/outputs/bundle/playRelease/app-play-release.aab Chartwall-play.aab
+          else
+            ./gradlew --no-daemon assembleGithubRelease compilePlayReleaseJavaWithJavac
+          fi
+          cp app/build/outputs/apk/github/release/app-github-release.apk Chartwall.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Chartwall-apk
-          path: Chartwall.apk
+          name: Chartwall
+          path: |
+            Chartwall.apk
+            Chartwall-play.aab
+          if-no-files-found: warn
 
       - name: Publish to the "latest" release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          FILES="Chartwall.apk"
+          [ -f Chartwall-play.aab ] && FILES="$FILES Chartwall-play.aab"
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest Chartwall.apk \
+          gh release create latest $FILES \
             --title "Chartwall (build ${{ github.run_number }})" \
-            --notes "Download Chartwall.apk on your Android phone and open it to install." \
+            --notes "Chartwall.apk: test version for your phone (everything unlocked). Chartwall-play.aab: upload this to Google Play Console." \
             --latest

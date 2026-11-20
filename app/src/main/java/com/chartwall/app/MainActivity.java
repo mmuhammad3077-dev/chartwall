@@ -1,6 +1,7 @@
 package com.chartwall.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -56,6 +57,9 @@ public class MainActivity extends Activity {
     private int quoteIdx = 0;
     private EditText quoteEdit, symbolEdit;
     private final ArrayList<Runnable> refreshers = new ArrayList<>();
+    private Store store;
+    private Button proButton;
+    private String proPrice;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -69,7 +73,26 @@ public class MainActivity extends Activity {
         for (int i = 0; i < Config.QUOTES.length; i++) if (Config.QUOTES[i].equals(cfg.quote)) quoteIdx = i;
         setContentView(build());
         preview.setConfig(cfg, true);
+        store = new Store(this, new Store.Listener() {
+            @Override public void onProChanged(boolean pro) {
+                if (pro != cfg.pro) recreate();
+            }
+            @Override public void onPrice(String price) {
+                proPrice = price;
+                if (proButton != null) proButton.setText("Unlock Pro · " + price);
+            }
+            @Override public void onMessage(String msg) { Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show(); }
+        });
+        store.start();
     }
+
+    @Override
+    protected void onDestroy() {
+        if (store != null) store.end();
+        super.onDestroy();
+    }
+
+    private String proLabel(String name, boolean free) { return (free || cfg.pro) ? name : name + " · PRO"; }
 
     private Typeface loadFont(String a, Typeface fb) {
         try { return Typeface.createFromAsset(getAssets(), a); } catch (Throwable t) { return fb; }
@@ -93,6 +116,38 @@ public class MainActivity extends Activity {
         sub.setPadding(0, px(2), 0, px(16));
         root.addView(sub);
 
+        // Android 15+ draws apps edge to edge: keep content clear of the status bar, nav bar and keyboard.
+        final int padTop = px(20), padBottom = px(32);
+        scroll.setOnApplyWindowInsetsListener((v, insets) -> {
+            int top, bottom;
+            if (Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets bars = insets.getInsets(android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.ime());
+                top = bars.top; bottom = bars.bottom;
+            } else {
+                top = insets.getSystemWindowInsetTop(); bottom = insets.getSystemWindowInsetBottom();
+            }
+            root.setPadding(px(18), padTop + top, px(18), padBottom + bottom);
+            return insets;
+        });
+
+        if (!cfg.pro && Store.billingEnabled()) {
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(px(16), px(14), px(16), px(14));
+            card.setBackground(rounded(PANEL, px(14), ACCENT));
+            TextView ct = text("Chartwall Pro", 17, INK, disp);
+            card.addView(ct);
+            TextView cd = text("Sab 6 styles aur 5 colors, apna logo aur company name, aur watermark nahi. Ek dafa ki payment.", 13, MUTE, null);
+            cd.setPadding(0, px(4), 0, px(10));
+            card.addView(cd);
+            proButton = button(proPrice != null ? "Unlock Pro · " + proPrice : "Unlock Pro", true);
+            proButton.setOnClickListener(v -> store.buy());
+            card.addView(proButton, fullWidth(0));
+            LinearLayout.LayoutParams clp = fullWidth(0);
+            clp.bottomMargin = px(16);
+            root.addView(card, clp);
+        }
+
         DisplayMetrics dm = getResources().getDisplayMetrics();
         int pw = Math.min(px(250), Math.round(dm.widthPixels * 0.62f));
         LinearLayout frame = new LinearLayout(this);
@@ -112,11 +167,13 @@ public class MainActivity extends Activity {
         root.addView(chips(new String[]{"Big clock (chart lower)", "Small clock"}, () -> cfg.bigClock ? 0 : 1, i -> { cfg.bigClock = i == 0; changed(false); }));
 
         section(root, "Style");
-        root.addView(chips(Config.STYLE_NAMES, () -> indexOf(Config.STYLES, cfg.style), i -> { cfg.style = Config.STYLES[i]; changed(false); }));
+        String[] styleLabels = new String[Config.STYLES.length];
+        for (int i = 0; i < styleLabels.length; i++) styleLabels[i] = proLabel(Config.STYLE_NAMES[i], Config.isFreeStyle(Config.STYLES[i]));
+        root.addView(chips(styleLabels, () -> indexOf(Config.STYLES, cfg.style), i -> { cfg.style = Config.STYLES[i]; changed(false); }));
 
         section(root, "Colors");
         String[] pn = new String[Palette.ALL.length];
-        for (int i = 0; i < pn.length; i++) pn[i] = Palette.ALL[i].name;
+        for (int i = 0; i < pn.length; i++) pn[i] = proLabel(Palette.ALL[i].name, Config.isFreePalette(Palette.ALL[i].id));
         root.addView(chips(pn, () -> { for (int i = 0; i < Palette.ALL.length; i++) if (Palette.ALL[i].id.equals(cfg.pal)) return i; return 0; },
                 i -> { cfg.pal = Palette.ALL[i].id; changed(false); }));
 
@@ -180,12 +237,12 @@ public class MainActivity extends Activity {
         name.setText(cfg.name);
         name.addTextChangedListener(new Watcher(s -> { cfg.name = s.trim(); changed(false); }));
         root.addView(name, fullWidth(0));
-        section(root, "Company / brand");
+        section(root, cfg.pro ? "Company / brand" : "Company / brand · PRO");
         EditText company = input("Ali Capital", 32);
         company.setText(cfg.company);
         company.addTextChangedListener(new Watcher(s -> { cfg.company = s.trim(); changed(false); }));
         root.addView(company, fullWidth(0));
-        section(root, "Logo");
+        section(root, cfg.pro ? "Logo" : "Logo · PRO");
         LinearLayout lrow = new LinearLayout(this);
         lrow.setGravity(Gravity.CENTER_VERTICAL);
         Button up = button("Upload logo", false);
@@ -371,6 +428,21 @@ public class MainActivity extends Activity {
     /* ---------- actions ---------- */
     private void setLiveWallpaper() {
         cfg.save(this);
+        java.util.List<String> locked = cfg.lockedInUse();
+        if (!locked.isEmpty() && Store.billingEnabled()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Ye Pro features hain")
+                    .setMessage("Aapne " + android.text.TextUtils.join(", ", locked) + " choose kiya hai jo Pro mein hai. "
+                            + "Pro unlock karo, ya free version lagao (Neon/Mono colors, Candles/Terminal/Quote style, sirf naam).")
+                    .setPositiveButton("Unlock Pro", (d, w) -> store.buy())
+                    .setNegativeButton("Free wala lagao", (d, w) -> openWallpaperPicker())
+                    .show();
+            return;
+        }
+        openWallpaperPicker();
+    }
+
+    private void openWallpaperPicker() {
         try {
             Intent i = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
             i.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, new ComponentName(this, ChartWallpaperService.class));
@@ -438,9 +510,11 @@ public class MainActivity extends Activity {
         getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         int w = Math.min(dm.widthPixels, dm.heightPixels), h = Math.max(dm.widthPixels, dm.heightPixels);
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Sim sim = new Sim(cfg);
+        Config still = Config.load(this);
+        still.applyFreeLimits();
+        Sim sim = new Sim(still);
         sim.step(0);
-        new Renderer(this).draw(new Canvas(bmp), w, h, cfg, sim, 0);
+        new Renderer(this).draw(new Canvas(bmp), w, h, still, sim, 0);
         ContentValues v = new ContentValues();
         v.put(MediaStore.Images.Media.DISPLAY_NAME, "chartwall-" + System.currentTimeMillis() + ".png");
         v.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
