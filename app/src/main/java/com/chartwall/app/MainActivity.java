@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
         root.addView(setBtn, fullWidth(px(18)));
 
         section(root, "Lock screen clock");
-        root.addView(chips(new String[]{"Big clock (chart lower)", "Small clock"}, () -> cfg.bigClock ? 0 : 1, i -> { cfg.bigClock = i == 0; changed(false); }));
+        root.addView(chips(new String[]{"Big clock (lock screen chart lower)", "Small clock"}, () -> cfg.bigClock ? 0 : 1, i -> { cfg.bigClock = i == 0; changed(false); }));
 
         section(root, "Style");
         String[] styleLabels = new String[Config.STYLES.length];

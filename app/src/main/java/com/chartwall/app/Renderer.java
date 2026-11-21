@@ -45,11 +45,13 @@ public final class Renderer {
        so phones with a huge lock-screen clock (Xiaomi, Realme...) keep the chart readable. */
     private static final float START = 0.545f, K = 0.52f;
     private boolean low;
+    /** True while the lock screen is showing. The big-clock layout is only used there, so the home screen gets the full chart. */
+    public boolean onLockScreen = true;
     private float fy(float f) { return H * (low && f >= 0.3f ? START + (f - 0.3f) * K : f); }
 
     public void draw(Canvas canvas, int width, int height, Config config, Sim simulation, long tMs) {
         c = canvas; W = width; H = height; s = W / 1080f; cfg = config; sim = simulation; t = tMs;
-        P = Palette.get(cfg.pal); mk = cfg.marketData(); low = cfg.bigClock;
+        P = Palette.get(cfg.pal); mk = cfg.marketData(); low = cfg.bigClock && onLockScreen;
         drawBg();
         Random rng = new Random(cfg.seed);
         switch (cfg.style) {

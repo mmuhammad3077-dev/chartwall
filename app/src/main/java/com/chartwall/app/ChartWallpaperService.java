@@ -1,6 +1,10 @@
 package com.chartwall.app;
 
+import android.app.KeyguardManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.os.Build;
@@ -25,11 +29,22 @@ public class ChartWallpaperService extends WallpaperService {
         private boolean visible;
         private int width, height;
         private final Runnable drawRunner = this::drawFrame;
+        private KeyguardManager keyguard;
+        /** Redraw when the phone locks or unlocks, so the layout switches even when the candles are still. */
+        private final BroadcastReceiver lockReceiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context ctx, Intent i) { schedule(0); }
+        };
 
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
             renderer = new Renderer(ChartWallpaperService.this);
+            keyguard = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            IntentFilter f = new IntentFilter();
+            f.addAction(Intent.ACTION_USER_PRESENT);
+            f.addAction(Intent.ACTION_SCREEN_ON);
+            f.addAction(Intent.ACTION_SCREEN_OFF);
+            try { registerReceiver(lockReceiver, f); } catch (Throwable ignored) { }
             reload();
             getSharedPreferences(Config.PREFS, Context.MODE_PRIVATE).registerOnSharedPreferenceChangeListener(this);
         }
@@ -70,6 +85,7 @@ public class ChartWallpaperService extends WallpaperService {
         @Override
         public void onDestroy() {
             handler.removeCallbacks(drawRunner);
+            try { unregisterReceiver(lockReceiver); } catch (Throwable ignored) { }
             getSharedPreferences(Config.PREFS, Context.MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(this);
             super.onDestroy();
         }
@@ -92,6 +108,7 @@ public class ChartWallpaperService extends WallpaperService {
                 if (canvas != null) {
                     long t = start - t0;
                     sim.step(t);
+                    renderer.onLockScreen = keyguard == null || keyguard.isKeyguardLocked();
                     renderer.draw(canvas, width, height, cfg, sim, t);
                 }
             } catch (Throwable ignored) {

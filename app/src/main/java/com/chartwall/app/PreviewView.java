@@ -19,6 +19,7 @@ public class PreviewView extends View {
     public PreviewView(Context ctx) {
         super(ctx);
         renderer = new Renderer(ctx);
+        renderer.onLockScreen = false; // preview shows the home-screen layout
         DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
         float w = Math.min(dm.widthPixels, dm.heightPixels), h = Math.max(dm.widthPixels, dm.heightPixels);
         ratio = h / w;
